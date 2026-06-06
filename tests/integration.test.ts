@@ -17,8 +17,8 @@ describe('rsa-4096 file-fallback (integration: real ssh-keygen)', () => {
 
     expect(plan.filename).toBe('id_rsa')
     expect(plan.privateKey).toContain('OPENSSH PRIVATE KEY')
-    expect(plan.caption.length).toBeLessThanOrEqual(1024)
-    expect(plan.followup.length).toBeLessThanOrEqual(4096)
-    expect(plan.followup).toContain(key.publicKey.slice(0, 20))
+    expect(plan.caption.text.length).toBeLessThanOrEqual(1024)
+    expect(plan.followup.text.length).toBeLessThanOrEqual(4096)
+    expect(plan.followup.text).toContain(key.publicKey.slice(0, 20))
   }, 30000)
 })

@@ -21,16 +21,17 @@ describe('formatKey', () => {
     const plan = formatKey(makeKey(), date, 'UTC')
     expect(plan.mode).toBe('inline')
     if (plan.mode !== 'inline') throw new Error('expected inline')
-    expect(plan.text).toContain('ssh key of the day • jun 05 2026')
-    expect(plan.text).toContain('<b>private key:</b>')
-    expect(plan.text).toContain('<pre>')
-    expect(plan.text.length).toBeLessThanOrEqual(4096)
+    expect(plan.text.text).toContain('ssh key of the day • jun 05 2026')
+    expect(plan.text.text).toContain('private key:')
+    expect(plan.text.entities.some(e => e.type === 'bold')).toBe(true)
+    expect(plan.text.entities.some(e => e.type === 'pre')).toBe(true)
+    expect(plan.text.text.length).toBeLessThanOrEqual(4096)
   })
 
-  it('escapes HTML-special chars in key bodies', () => {
-    const plan = formatKey(makeKey({ publicKey: 'ssh-rsa A<B>&C' }), date, 'UTC')
+  it('keeps markup-special chars verbatim (entities, no parse_mode escaping)', () => {
+    const plan = formatKey(makeKey({ publicKey: 'ssh-rsa A<B>&C_*[' }), date, 'UTC')
     if (plan.mode !== 'inline') throw new Error('expected inline')
-    expect(plan.text).toContain('A&lt;B&gt;&amp;C')
+    expect(plan.text.text).toContain('A<B>&C_*[')
   })
 
   it('falls back to file mode when over 4096', () => {
@@ -39,14 +40,14 @@ describe('formatKey', () => {
     if (plan.mode !== 'file') throw new Error('expected file')
     expect(plan.filename).toBe('id_rsa')
     expect(plan.privateKey.length).toBe(5000)
-    expect(plan.caption.length).toBeLessThanOrEqual(1024)
-    expect(plan.followup).toContain('<b>public key:</b>')
-    expect(plan.followup.length).toBeLessThanOrEqual(4096)
+    expect(plan.caption.text.length).toBeLessThanOrEqual(1024)
+    expect(plan.followup.text).toContain('public key:')
+    expect(plan.followup.text.length).toBeLessThanOrEqual(4096)
   })
 
   it('respects timezone when rendering the date', () => {
     const plan = formatKey(makeKey(), new Date('2026-06-05T23:30:00Z'), 'Asia/Tokyo')
     if (plan.mode !== 'inline') throw new Error('expected inline')
-    expect(plan.text).toContain('jun 06 2026')
+    expect(plan.text.text).toContain('jun 06 2026')
   })
 })

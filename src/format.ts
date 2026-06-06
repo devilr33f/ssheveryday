@@ -1,20 +1,17 @@
+import { bold, pre, join, Formatted } from '@puregram/markup'
 import type { GeneratedKey } from './keygen.js'
 
-export interface InlinePlan { mode: 'inline'; text: string }
+export interface InlinePlan { mode: 'inline'; text: Formatted }
 export interface FilePlan {
   mode: 'file'
-  caption: string
+  caption: Formatted
   privateKey: string
   filename: string
-  followup: string
+  followup: Formatted
 }
 export type RenderPlan = InlinePlan | FilePlan
 
 const MESSAGE_LIMIT = 4096
-
-function esc(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
 
 function formatDate(date: Date, tz: string): string {
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -24,42 +21,27 @@ function formatDate(date: Date, tz: string): string {
   return `${get('month').toLowerCase()} ${get('day')} ${get('year')}`
 }
 
+function section(label: string, body: string): Formatted {
+  return join([bold(`${label}:`), pre(body)], '\n')
+}
+
 export function formatKey(key: GeneratedKey, date: Date, tz: string): RenderPlan {
-  const dateStr = formatDate(date, tz)
-  const title = `<b>ssh key of the day • ${dateStr}</b>`
+  const title = bold(`ssh key of the day • ${formatDate(date, tz)}`)
 
-  const text = [
+  const text = join([
     title,
-    '',
-    '<b>private key:</b>',
-    `<pre>${esc(key.privateKey)}</pre>`,
-    '',
-    '<b>public key:</b>',
-    `<pre>${esc(key.publicKey)}</pre>`,
-    '',
-    '<b>fingerprint:</b>',
-    `<pre>${esc(key.fingerprint)}</pre>`,
-    '',
-    `<pre>${esc(key.randomart)}</pre>`
-  ].join('\n')
+    section('private key', key.privateKey),
+    section('public key', key.publicKey),
+    section('fingerprint', key.fingerprint),
+    pre(key.randomart)
+  ], '\n\n')
 
-  if (text.length <= MESSAGE_LIMIT) {
+  if (text.text.length <= MESSAGE_LIMIT) {
     return { mode: 'inline', text }
   }
 
-  const caption = [
-    title,
-    '',
-    '<b>fingerprint:</b>',
-    `<pre>${esc(key.fingerprint)}</pre>`
-  ].join('\n')
-
-  const followup = [
-    '<b>public key:</b>',
-    `<pre>${esc(key.publicKey)}</pre>`,
-    '',
-    `<pre>${esc(key.randomart)}</pre>`
-  ].join('\n')
+  const caption = join([title, section('fingerprint', key.fingerprint)], '\n\n')
+  const followup = join([section('public key', key.publicKey), pre(key.randomart)], '\n\n')
 
   return { mode: 'file', caption, privateKey: key.privateKey, filename: `id_${key.algo}`, followup }
 }

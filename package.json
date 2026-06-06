@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@puregram/markup": "^3.0.0",
     "node-cron": "^4.2.1",
     "puregram": "^3.0.0",
     "tsx": "^4.22.4"
