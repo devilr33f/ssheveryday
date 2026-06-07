@@ -1,10 +1,9 @@
 import { Telegram } from 'puregram'
-import { markup } from '@puregram/markup'
 import { loadConfig } from './config.js'
 import { startScheduler } from './scheduler.js'
 
 const config = loadConfig()
-const tg = Telegram.fromToken(config.botToken).extend(markup())
+const tg = Telegram.fromToken(config.botToken)
 
 startScheduler(tg, config)
 console.log(`[ssheveryday] scheduler started: "${config.cronSchedule}" (${config.tz})`)

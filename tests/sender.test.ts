@@ -10,31 +10,36 @@ function makeTg() {
 }
 
 describe('send', () => {
-  it('sends a single message for inline plans, no parse_mode', async () => {
+  it('unwraps Formatted to text + entities for inline plans, no parse_mode', async () => {
     const { tg, sendMessage, sendDocument } = makeTg()
-    const text = new Formatted('hello')
+    const text = new Formatted('hello', [{ type: 'bold', offset: 0, length: 5 }])
     const plan: RenderPlan = { mode: 'inline', text }
     await send(tg, '@chan', plan)
     expect(sendMessage).toHaveBeenCalledTimes(1)
-    expect(sendMessage).toHaveBeenCalledWith({ chat_id: '@chan', text })
+    expect(sendMessage).toHaveBeenCalledWith({
+      chat_id: '@chan', text: 'hello', entities: [{ type: 'bold', offset: 0, length: 5 }]
+    })
     expect(sendMessage.mock.calls[0][0]).not.toHaveProperty('parse_mode')
     expect(sendDocument).not.toHaveBeenCalled()
   })
 
-  it('sends document + followup for file plans', async () => {
+  it('unwraps to caption + caption_entities for file plans', async () => {
     const { tg, sendMessage, sendDocument } = makeTg()
-    const caption = new Formatted('cap')
-    const followup = new Formatted('pub')
+    const caption = new Formatted('cap', [{ type: 'bold', offset: 0, length: 3 }])
+    const followup = new Formatted('pub', [{ type: 'pre', offset: 0, length: 3 }])
     const plan: RenderPlan = {
       mode: 'file', caption, privateKey: 'PRIV', filename: 'id_rsa', followup
     }
     await send(tg, '@chan', plan)
     expect(sendDocument).toHaveBeenCalledTimes(1)
     expect(sendDocument).toHaveBeenCalledWith(
-      expect.objectContaining({ chat_id: '@chan', caption })
+      expect.objectContaining({
+        chat_id: '@chan', caption: 'cap', caption_entities: [{ type: 'bold', offset: 0, length: 3 }]
+      })
     )
     expect(sendDocument.mock.calls[0][0]).not.toHaveProperty('parse_mode')
-    expect(sendMessage).toHaveBeenCalledTimes(1)
-    expect(sendMessage).toHaveBeenCalledWith({ chat_id: '@chan', text: followup })
+    expect(sendMessage).toHaveBeenCalledWith({
+      chat_id: '@chan', text: 'pub', entities: [{ type: 'pre', offset: 0, length: 3 }]
+    })
   })
 })
